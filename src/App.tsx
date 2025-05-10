@@ -21,6 +21,16 @@ import DonationHistory from "./pages/donor/DonationHistory";
 import ImpactDashboard from "./pages/donor/ImpactDashboard";
 import DonorProfile from "./pages/donor/DonorProfile";
 
+// NGO Module Screens
+import NgoDashboard from "./pages/ngo/NgoDashboard";
+import AvailableDonations from "./pages/ngo/AvailableDonations";
+import DonationDetails from "./pages/ngo/DonationDetails";
+import PickupAssignment from "./pages/ngo/PickupAssignment";
+import ActivePickups from "./pages/ngo/ActivePickups";
+import DistributionManagement from "./pages/ngo/DistributionManagement";
+import AnalyticsReporting from "./pages/ngo/AnalyticsReporting";
+import NgoProfile from "./pages/ngo/NgoProfile";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -45,6 +55,16 @@ const App = () => (
           <Route path="/donor/donation-history" element={<DonationHistory />} />
           <Route path="/donor/impact" element={<ImpactDashboard />} />
           <Route path="/donor/profile" element={<DonorProfile />} />
+          
+          {/* NGO Module Routes */}
+          <Route path="/ngo/dashboard" element={<NgoDashboard />} />
+          <Route path="/ngo/available-donations" element={<AvailableDonations />} />
+          <Route path="/ngo/donation-details/:id" element={<DonationDetails />} />
+          <Route path="/ngo/pickup-assignment/:id" element={<PickupAssignment />} />
+          <Route path="/ngo/active-pickups" element={<ActivePickups />} />
+          <Route path="/ngo/distribution" element={<DistributionManagement />} />
+          <Route path="/ngo/analytics" element={<AnalyticsReporting />} />
+          <Route path="/ngo/profile" element={<NgoProfile />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
