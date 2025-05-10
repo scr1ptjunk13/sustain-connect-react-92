@@ -31,6 +31,18 @@ import DistributionManagement from "./pages/ngo/DistributionManagement";
 import AnalyticsReporting from "./pages/ngo/AnalyticsReporting";
 import NgoProfile from "./pages/ngo/NgoProfile";
 
+// Delivery Module Screens
+import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
+import AvailableDeliveries from "./pages/delivery/AvailableDeliveries";
+import DeliveryDetails from "./pages/delivery/DeliveryDetails";
+import NavigationScreen from "./pages/delivery/NavigationScreen";
+import PickupConfirmation from "./pages/delivery/PickupConfirmation";
+import InTransit from "./pages/delivery/InTransit";
+import DeliveryConfirmation from "./pages/delivery/DeliveryConfirmation";
+import DeliveryHistory from "./pages/delivery/DeliveryHistory";
+import ActiveDeliveries from "./pages/delivery/ActiveDeliveries";
+import DeliveryProfile from "./pages/delivery/DeliveryProfile";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -65,6 +77,18 @@ const App = () => (
           <Route path="/ngo/distribution" element={<DistributionManagement />} />
           <Route path="/ngo/analytics" element={<AnalyticsReporting />} />
           <Route path="/ngo/profile" element={<NgoProfile />} />
+          
+          {/* Delivery Module Routes */}
+          <Route path="/delivery/dashboard" element={<DeliveryDashboard />} />
+          <Route path="/delivery/available" element={<AvailableDeliveries />} />
+          <Route path="/delivery/active" element={<ActiveDeliveries />} />
+          <Route path="/delivery/details/:id" element={<DeliveryDetails />} />
+          <Route path="/delivery/navigation/:id" element={<NavigationScreen />} />
+          <Route path="/delivery/pickup-confirmation/:id" element={<PickupConfirmation />} />
+          <Route path="/delivery/in-transit/:id" element={<InTransit />} />
+          <Route path="/delivery/delivery-confirmation/:id" element={<DeliveryConfirmation />} />
+          <Route path="/delivery/history" element={<DeliveryHistory />} />
+          <Route path="/delivery/profile" element={<DeliveryProfile />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
