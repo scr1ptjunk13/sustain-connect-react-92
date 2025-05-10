@@ -3,12 +3,12 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   User, 
-  CheckBadge,  
-  SliderHorizontal, 
+  CheckCircle,  
+  SlidersHorizontal, 
   HelpCircle,
   LogOut,
   ArrowRight,
-  CheckCircle
+  CheckCircle as CheckCircleIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -115,7 +115,7 @@ const DonorProfile: React.FC = () => {
         </ProfileSection>
 
         <ProfileSection 
-          icon={<CheckBadge className="h-5 w-5 text-primary" />}
+          icon={<CheckCircle className="h-5 w-5 text-primary" />}
           title="Account Status"
         >
           <div className="bg-white rounded-lg border p-4">
@@ -126,7 +126,7 @@ const DonorProfile: React.FC = () => {
               </div>
               {user.verified ? (
                 <div className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center">
-                  <CheckCircle className="h-3 w-3 mr-1" />
+                  <CheckCircleIcon className="h-3 w-3 mr-1" />
                   Verified
                 </div>
               ) : (
@@ -144,12 +144,12 @@ const DonorProfile: React.FC = () => {
         </ProfileSection>
 
         <ProfileSection 
-          icon={<SliderHorizontal className="h-5 w-5 text-primary" />}
+          icon={<SlidersHorizontal className="h-5 w-5 text-primary" />}
           title="Settings & Support"
         >
           <div className="bg-white rounded-lg border divide-y">
             <SettingsLink 
-              icon={<SliderHorizontal className="h-5 w-5 text-muted-foreground" />}
+              icon={<SlidersHorizontal className="h-5 w-5 text-muted-foreground" />}
               label="Preferences"
               onClick={() => toast({ 
                 title: "Preferences", 
