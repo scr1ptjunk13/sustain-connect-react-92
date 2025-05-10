@@ -11,6 +11,16 @@ import LoginScreen from "./pages/LoginScreen";
 import PasswordRecoveryScreen from "./pages/PasswordRecoveryScreen";
 import NotFound from "./pages/NotFound";
 
+// Donor Module Screens
+import DonorDashboard from "./pages/donor/DonorDashboard";
+import CreateDonation from "./pages/donor/CreateDonation";
+import LocationPickupDetails from "./pages/donor/LocationPickupDetails";
+import DonationReviewSubmit from "./pages/donor/DonationReviewSubmit";
+import DonationStatus from "./pages/donor/DonationStatus";
+import DonationHistory from "./pages/donor/DonationHistory";
+import ImpactDashboard from "./pages/donor/ImpactDashboard";
+import DonorProfile from "./pages/donor/DonorProfile";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -25,6 +35,17 @@ const App = () => (
           <Route path="/register" element={<RegistrationScreen />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/recover-password" element={<PasswordRecoveryScreen />} />
+          
+          {/* Donor Module Routes */}
+          <Route path="/donor/dashboard" element={<DonorDashboard />} />
+          <Route path="/donor/create-donation" element={<CreateDonation />} />
+          <Route path="/donor/location-pickup" element={<LocationPickupDetails />} />
+          <Route path="/donor/review-submit" element={<DonationReviewSubmit />} />
+          <Route path="/donor/donation-status/:id" element={<DonationStatus />} />
+          <Route path="/donor/donation-history" element={<DonationHistory />} />
+          <Route path="/donor/impact" element={<ImpactDashboard />} />
+          <Route path="/donor/profile" element={<DonorProfile />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
