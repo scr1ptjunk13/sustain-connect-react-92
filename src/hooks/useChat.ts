@@ -12,11 +12,11 @@ interface ChatRoom {
   is_active: boolean;
   created_at: string;
   participants?: ChatParticipant[];
-  lastMessage?: ChatMessage;
 }
 
 interface ChatParticipant {
   id: string;
+  room_id: string;
   user_id: string;
   joined_at: string;
   last_read_at: string;
@@ -39,10 +39,10 @@ interface ChatMessage {
   };
 }
 
-export const useChat = (roomId?: string) => {
+export const useChat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentRoom, setCurrentRoom] = useState<ChatRoom | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -53,12 +53,11 @@ export const useChat = (roomId?: string) => {
   }, [user]);
 
   useEffect(() => {
-    if (roomId) {
-      setCurrentRoom(rooms.find(room => room.id === roomId) || null);
-      fetchMessages(roomId);
-      subscribeToMessages(roomId);
+    if (currentRoom) {
+      fetchMessages(currentRoom.id);
+      subscribeToMessages(currentRoom.id);
     }
-  }, [roomId, rooms]);
+  }, [currentRoom]);
 
   const fetchRooms = async () => {
     if (!user) return;
@@ -71,44 +70,56 @@ export const useChat = (roomId?: string) => {
           *,
           participants:chat_participants(
             *,
-            user:profiles!chat_participants_user_id_fkey(full_name, role)
+            user:profiles(full_name, role)
           )
         `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true);
 
       if (error) throw error;
-      setRooms(data || []);
+
+      const typedRooms = (data || []).map(room => ({
+        ...room,
+        room_type: room.room_type as 'general' | 'support' | 'delivery' | 'donation'
+      }));
+
+      setRooms(typedRooms);
     } catch (error: any) {
       console.error('Error fetching chat rooms:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load chat rooms",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const fetchMessages = async (roomId: string) => {
-    if (!user || !roomId) return;
-
     try {
       const { data, error } = await supabase
         .from('chat_messages')
         .select(`
           *,
-          sender:profiles!chat_messages_sender_id_fkey(full_name, role)
+          sender:profiles(full_name, role)
         `)
         .eq('room_id', roomId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+
+      const typedMessages = (data || []).map(message => ({
+        ...message,
+        message_type: message.message_type as 'text' | 'image' | 'file' | 'system'
+      }));
+
+      setMessages(typedMessages);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
     }
   };
 
   const subscribeToMessages = (roomId: string) => {
-    if (!user || !roomId) return;
-
     const channel = supabase
       .channel(`chat_messages_${roomId}`)
       .on(
@@ -120,7 +131,7 @@ export const useChat = (roomId?: string) => {
           filter: `room_id=eq.${roomId}`
         },
         (payload) => {
-          console.log('New chat message:', payload);
+          console.log('New message received:', payload);
           fetchMessages(roomId);
         }
       )
@@ -131,59 +142,7 @@ export const useChat = (roomId?: string) => {
     };
   };
 
-  const createRoom = async (
-    name: string, 
-    roomType: 'general' | 'support' | 'delivery' | 'donation' = 'general',
-    participantIds: string[] = []
-  ) => {
-    if (!user) return null;
-
-    try {
-      const { data: room, error: roomError } = await supabase
-        .from('chat_rooms')
-        .insert({
-          name,
-          room_type: roomType,
-          created_by: user.id
-        })
-        .select()
-        .single();
-
-      if (roomError) throw roomError;
-
-      // Add creator as participant
-      const participants = [user.id, ...participantIds];
-      
-      const { error: participantError } = await supabase
-        .from('chat_participants')
-        .insert(
-          participants.map(userId => ({
-            room_id: room.id,
-            user_id: userId
-          }))
-        );
-
-      if (participantError) throw participantError;
-
-      toast({
-        title: "Chat Room Created",
-        description: `Room "${name}" has been created successfully`
-      });
-
-      fetchRooms();
-      return room;
-    } catch (error: any) {
-      console.error('Error creating chat room:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create chat room",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
-
-  const sendMessage = async (roomId: string, content: string, messageType: 'text' | 'image' | 'file' | 'system' = 'text') => {
+  const sendMessage = async (roomId: string, content: string) => {
     if (!user) return false;
 
     try {
@@ -193,10 +152,11 @@ export const useChat = (roomId?: string) => {
           room_id: roomId,
           sender_id: user.id,
           content,
-          message_type: messageType
+          message_type: 'text'
         });
 
       if (error) throw error;
+
       return true;
     } catch (error: any) {
       console.error('Error sending message:', error);
@@ -206,6 +166,43 @@ export const useChat = (roomId?: string) => {
         variant: "destructive"
       });
       return false;
+    }
+  };
+
+  const createRoom = async (name: string, roomType: 'general' | 'support' | 'delivery' | 'donation') => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('chat_rooms')
+        .insert({
+          name,
+          room_type: roomType,
+          created_by: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Add creator as participant
+      await supabase
+        .from('chat_participants')
+        .insert({
+          room_id: data.id,
+          user_id: user.id
+        });
+
+      fetchRooms();
+      return data;
+    } catch (error: any) {
+      console.error('Error creating room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create chat room",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
@@ -222,33 +219,23 @@ export const useChat = (roomId?: string) => {
 
       if (error) throw error;
 
-      toast({
-        title: "Joined Room",
-        description: "You have successfully joined the chat room"
-      });
-
       fetchRooms();
       return true;
     } catch (error: any) {
       console.error('Error joining room:', error);
-      toast({
-        title: "Error",
-        description: "Failed to join room",
-        variant: "destructive"
-      });
       return false;
     }
   };
 
   return {
     rooms,
-    messages,
     currentRoom,
+    messages,
     loading,
-    createRoom,
+    setCurrentRoom,
     sendMessage,
+    createRoom,
     joinRoom,
-    fetchRooms,
-    fetchMessages: (id: string) => fetchMessages(id)
+    refetch: fetchRooms
   };
 };

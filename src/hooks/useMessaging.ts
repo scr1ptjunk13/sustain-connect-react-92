@@ -48,12 +48,17 @@ export const useMessaging = () => {
 
       if (error) throw error;
 
-      setMessages(data || []);
+      const typedMessages = (data || []).map(message => ({
+        ...message,
+        message_type: message.message_type as 'direct' | 'support' | 'notification'
+      }));
+
+      setMessages(typedMessages);
       
       // Count unread messages
-      const unread = data?.filter(msg => 
+      const unread = typedMessages.filter(msg => 
         msg.recipient_id === user.id && !msg.is_read
-      ).length || 0;
+      ).length;
       setUnreadCount(unread);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
