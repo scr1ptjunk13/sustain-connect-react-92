@@ -21,7 +21,7 @@ import {
 
 interface ChartData {
   name: string;
-  value: number;
+  value?: number;
   [key: string]: any;
 }
 

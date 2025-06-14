@@ -113,11 +113,11 @@ const AdvancedAnalytics: React.FC = () => {
             timeSeriesData={data?.timeSeriesData || []}
             distributionData={data?.distributionData || []}
             comparisonData={[
-              { name: 'Jan', completed: 45, pending: 12, cancelled: 3 },
-              { name: 'Feb', completed: 52, pending: 8, cancelled: 2 },
-              { name: 'Mar', completed: 61, pending: 15, cancelled: 4 },
-              { name: 'Apr', completed: 58, pending: 10, cancelled: 1 },
-              { name: 'May', completed: 67, pending: 18, cancelled: 5 }
+              { name: 'Jan', completed: 45, pending: 12, cancelled: 3, value: 60 },
+              { name: 'Feb', completed: 52, pending: 8, cancelled: 2, value: 62 },
+              { name: 'Mar', completed: 61, pending: 15, cancelled: 4, value: 80 },
+              { name: 'Apr', completed: 58, pending: 10, cancelled: 1, value: 69 },
+              { name: 'May', completed: 67, pending: 18, cancelled: 5, value: 90 }
             ]}
           />
         </TabsContent>

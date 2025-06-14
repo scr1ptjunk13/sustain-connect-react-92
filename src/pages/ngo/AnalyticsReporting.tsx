@@ -63,11 +63,11 @@ const AnalyticsReporting: React.FC = () => {
 
   // Mock chart data
   const timeSeriesData = [
-    { name: 'Jan', donations: 28, deliveries: 25 },
-    { name: 'Feb', donations: 35, deliveries: 32 },
-    { name: 'Mar', donations: 42, deliveries: 38 },
-    { name: 'Apr', donations: 38, deliveries: 35 },
-    { name: 'May', donations: 50, deliveries: 47 }
+    { name: 'Jan', donations: 28, deliveries: 25, value: 28 },
+    { name: 'Feb', donations: 35, deliveries: 32, value: 35 },
+    { name: 'Mar', donations: 42, deliveries: 38, value: 42 },
+    { name: 'Apr', donations: 38, deliveries: 35, value: 38 },
+    { name: 'May', donations: 50, deliveries: 47, value: 50 }
   ];
 
   const distributionData = [
@@ -121,8 +121,8 @@ const AnalyticsReporting: React.FC = () => {
           timeSeriesData={timeSeriesData}
           distributionData={distributionData}
           comparisonData={[
-            { name: 'This Month', completed: 47, pending: 3, cancelled: 0 },
-            { name: 'Last Month', completed: 35, pending: 2, cancelled: 1 }
+            { name: 'This Month', completed: 47, pending: 3, cancelled: 0, value: 50 },
+            { name: 'Last Month', completed: 35, pending: 2, cancelled: 1, value: 38 }
           ]}
         />
         
