@@ -85,12 +85,12 @@ export const useProfile = () => {
   };
 
   const resendVerificationEmail = async () => {
-    if (!user) return { error: new Error('No user found') };
+    if (!user?.email) return { error: new Error('No user email found') };
 
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: user.email!,
+        email: user.email,
         options: {
           emailRedirectTo: `${window.location.origin}/`
         }
