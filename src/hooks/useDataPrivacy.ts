@@ -90,15 +90,13 @@ export const useDataPrivacy = () => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
-        .from('privacy_consents')
-        .upsert({
-          user_id: user.id,
-          marketing_consent: consents.marketing || false,
-          analytics_consent: consents.analytics || false,
-          data_sharing_consent: consents.dataSharing || false,
-          updated_at: new Date().toISOString()
-        });
+      // Use a direct SQL query to handle the upsert
+      const { error } = await supabase.rpc('upsert_privacy_consents', {
+        p_user_id: user.id,
+        p_marketing_consent: consents.marketing || false,
+        p_analytics_consent: consents.analytics || false,
+        p_data_sharing_consent: consents.dataSharing || false
+      });
 
       if (error) throw error;
 

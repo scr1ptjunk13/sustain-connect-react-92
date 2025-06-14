@@ -61,14 +61,14 @@ export const useAuditLog = () => {
   }) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Create a raw SQL query since we need to join with profiles
+      const query = supabase
         .from('audit_logs')
-        .select(`
-          *,
-          user:profiles(full_name, email, role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setLogs(data || []);

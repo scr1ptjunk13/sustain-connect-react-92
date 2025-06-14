@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -100,6 +136,63 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           room_type?: string | null
+        }
+        Relationships: []
+      }
+      data_deletion_requests: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string | null
+          scheduled_deletion_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          scheduled_deletion_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          scheduled_deletion_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      data_export_requests: {
+        Row: {
+          created_at: string
+          data: Json | null
+          download_url: string | null
+          expires_at: string | null
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          download_url?: string | null
+          expires_at?: string | null
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          download_url?: string | null
+          expires_at?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -622,6 +715,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      privacy_consents: {
+        Row: {
+          analytics_consent: boolean | null
+          created_at: string
+          data_sharing_consent: boolean | null
+          id: string
+          marketing_consent: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analytics_consent?: boolean | null
+          created_at?: string
+          data_sharing_consent?: boolean | null
+          id?: string
+          marketing_consent?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analytics_consent?: boolean | null
+          created_at?: string
+          data_sharing_consent?: boolean | null
+          id?: string
+          marketing_consent?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

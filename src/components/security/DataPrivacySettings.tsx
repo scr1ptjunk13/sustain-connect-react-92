@@ -11,6 +11,16 @@ import { useDataPrivacy } from '@/hooks/useDataPrivacy';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface PrivacyConsent {
+  id: string;
+  user_id: string;
+  marketing_consent: boolean;
+  analytics_consent: boolean;
+  data_sharing_consent: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const DataPrivacySettings: React.FC = () => {
   const { loading, requestDataExport, requestDataDeletion, updatePrivacyConsent } = useDataPrivacy();
   const { user } = useAuth();
@@ -29,19 +39,18 @@ const DataPrivacySettings: React.FC = () => {
     if (!user) return;
 
     try {
+      // Use raw SQL to query privacy_consents table
       const { data, error } = await supabase
-        .from('privacy_consents')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .rpc('get_privacy_consents', { p_user_id: user.id });
 
       if (error) throw error;
 
-      if (data) {
+      if (data && data.length > 0) {
+        const consent = data[0];
         setConsents({
-          marketing: data.marketing_consent || false,
-          analytics: data.analytics_consent || false,
-          dataSharing: data.data_sharing_consent || false
+          marketing: consent.marketing_consent || false,
+          analytics: consent.analytics_consent || false,
+          dataSharing: consent.data_sharing_consent || false
         });
       }
     } catch (error) {

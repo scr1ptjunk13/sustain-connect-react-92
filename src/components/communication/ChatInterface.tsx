@@ -5,43 +5,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Send, MessageSquare, Users, Plus } from 'lucide-react';
+import { Send, Users, MessageCircle } from 'lucide-react';
 import { useChat } from '@/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 
-interface ChatInterfaceProps {
-  roomId?: string;
-}
-
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ roomId }) => {
-  const { rooms, messages, currentRoom, sendMessage, createRoom, fetchMessages } = useChat(roomId);
+const ChatInterface: React.FC = () => {
+  const { rooms, currentRoom, messages, loading, setCurrentRoom, sendMessage, refetch } = useChat();
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
-  const [showCreateRoom, setShowCreateRoom] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    refetch();
+  }, []);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentRoom) return;
 
-    const success = await sendMessage(currentRoom.id, newMessage.trim());
+    const success = await sendMessage(currentRoom.id, newMessage);
     if (success) {
       setNewMessage('');
-    }
-  };
-
-  const handleCreateRoom = async () => {
-    if (!newRoomName.trim()) return;
-
-    const room = await createRoom(newRoomName.trim(), 'general');
-    if (room) {
-      setNewRoomName('');
-      setShowCreateRoom(false);
     }
   };
 
@@ -52,66 +40,59 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ roomId }) => {
     }
   };
 
+  if (loading) {
+    return <div className="text-center py-8">Loading chat...</div>;
+  }
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[600px]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px]">
       {/* Room List */}
-      <Card className="lg:col-span-1">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Chat Rooms</CardTitle>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => setShowCreateRoom(true)}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+      <Card className="md:col-span-1">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Chat Rooms
+          </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent>
           <ScrollArea className="h-96">
-            <div className="space-y-1 p-3">
+            <div className="space-y-2">
               {rooms.map((room) => (
-                <div
+                <Button
                   key={room.id}
-                  className={`p-3 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                    currentRoom?.id === room.id ? 'bg-blue-50 border border-blue-200' : ''
-                  }`}
-                  onClick={() => fetchMessages(room.id)}
+                  variant={currentRoom?.id === room.id ? "default" : "outline"}
+                  className="w-full justify-start"
+                  onClick={() => setCurrentRoom(room)}
                 >
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    <span className="font-medium text-sm">{room.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center justify-between w-full">
+                    <span>{room.name}</span>
                     <Badge variant="secondary" className="text-xs">
                       {room.room_type}
                     </Badge>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Users className="h-3 w-3" />
-                      <span>{room.participants?.length || 0}</span>
-                    </div>
                   </div>
-                </div>
+                </Button>
               ))}
+              {rooms.length === 0 && (
+                <p className="text-muted-foreground text-sm">No chat rooms available</p>
+              )}
             </div>
           </ScrollArea>
         </CardContent>
       </Card>
 
       {/* Chat Messages */}
-      <Card className="lg:col-span-3">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">
+      <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
             {currentRoom ? currentRoom.name : 'Select a Chat Room'}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col h-96">
+        <CardContent className="flex flex-col h-full">
           {currentRoom ? (
             <>
-              {/* Messages */}
-              <ScrollArea className="flex-1 pr-4">
-                <div className="space-y-3">
+              <ScrollArea className="flex-1 mb-4 h-96">
+                <div className="space-y-4 p-4">
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -120,23 +101,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ roomId }) => {
                       }`}
                     >
                       <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                           message.sender_id === user?.id
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
                         }`}
                       >
-                        {message.sender_id !== user?.id && (
-                          <p className="text-xs font-medium mb-1 opacity-70">
-                            {message.sender?.full_name}
-                          </p>
-                        )}
-                        <p className="text-sm whitespace-pre-wrap">
-                          {message.content}
-                        </p>
-                        <p className={`text-xs mt-1 ${
-                          message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
-                        }`}>
+                        <p className="text-sm">{message.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
                           {format(new Date(message.created_at), 'HH:mm')}
                         </p>
                       </div>
@@ -146,14 +118,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ roomId }) => {
                 </div>
               </ScrollArea>
 
-              {/* Message Input */}
-              <div className="flex gap-2 mt-4 pt-4 border-t">
+              <div className="flex gap-2">
                 <Input
-                  placeholder="Type your message..."
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your message..."
                   onKeyPress={handleKeyPress}
-                  className="flex-1"
                 />
                 <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
                   <Send className="h-4 w-4" />
@@ -167,39 +137,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ roomId }) => {
           )}
         </CardContent>
       </Card>
-
-      {/* Create Room Modal */}
-      {showCreateRoom && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Create Chat Room</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Room Name</label>
-                <Input
-                  placeholder="Enter room name"
-                  value={newRoomName}
-                  onChange={(e) => setNewRoomName(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex gap-2">
-                <Button 
-                  onClick={handleCreateRoom}
-                  disabled={!newRoomName.trim()}
-                >
-                  Create Room
-                </Button>
-                <Button variant="outline" onClick={() => setShowCreateRoom(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 };

@@ -69,20 +69,18 @@ export const useChat = () => {
         .select(`
           *,
           participants:chat_participants(
-            *,
-            user:profiles(full_name, role)
+            id,
+            room_id,
+            user_id,
+            joined_at,
+            last_read_at
           )
         `)
         .eq('is_active', true);
 
       if (error) throw error;
 
-      const typedRooms = (data || []).map(room => ({
-        ...room,
-        room_type: room.room_type as 'general' | 'support' | 'delivery' | 'donation'
-      }));
-
-      setRooms(typedRooms);
+      setRooms(data || []);
     } catch (error: any) {
       console.error('Error fetching chat rooms:', error);
       toast({
@@ -100,20 +98,19 @@ export const useChat = () => {
       const { data, error } = await supabase
         .from('chat_messages')
         .select(`
-          *,
-          sender:profiles(full_name, role)
+          id,
+          room_id,
+          sender_id,
+          content,
+          message_type,
+          created_at
         `)
         .eq('room_id', roomId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      const typedMessages = (data || []).map(message => ({
-        ...message,
-        message_type: message.message_type as 'text' | 'image' | 'file' | 'system'
-      }));
-
-      setMessages(typedMessages);
+      setMessages(data || []);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
     }
