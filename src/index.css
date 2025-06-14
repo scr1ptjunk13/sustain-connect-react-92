@@ -75,6 +75,67 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* PWA safe areas for notched devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Mobile optimizations */
+  input, textarea, select, button {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* Better touch targets for mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Prevent zoom on inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Custom scrollbars for mobile */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 2px;
   }
 }
 
@@ -89,5 +150,35 @@
 
   .form-container {
     @apply flex flex-col gap-4 w-full max-w-sm mx-auto;
+  }
+
+  /* Mobile-first touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  /* Mobile pull-to-refresh indicator */
+  .pull-to-refresh {
+    @apply relative overflow-hidden;
+  }
+
+  /* Mobile swipe gestures */
+  .swipe-container {
+    @apply relative overflow-hidden touch-pan-x;
+  }
+
+  /* Mobile-optimized cards */
+  .mobile-card {
+    @apply rounded-lg bg-card text-card-foreground shadow-sm border p-4 mb-4 active:scale-[0.98] transition-transform;
+  }
+
+  /* Mobile navigation */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t safe-area-bottom;
+  }
+
+  /* Mobile full screen overlays */
+  .mobile-overlay {
+    @apply fixed inset-0 z-50 bg-background;
   }
 }
