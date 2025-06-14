@@ -14,6 +14,11 @@ interface Profile {
   updated_at: string;
 }
 
+interface ProfileUpdateData {
+  full_name?: string;
+  phone?: string;
+}
+
 export const useProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +57,7 @@ export const useProfile = () => {
     }
   };
 
-  const updateProfile = async (updates: Partial<Pick<Profile, 'full_name' | 'phone'>>) => {
+  const updateProfile = async (updates: ProfileUpdateData) => {
     if (!user) return { error: new Error('No user found') };
 
     try {
