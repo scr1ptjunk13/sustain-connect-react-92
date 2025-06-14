@@ -16,33 +16,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import NgoLayout from '@/components/ngo/NgoLayout';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
-
-// Mock data for charts
-const monthlyData = [
-  { name: 'Jan', value: 28 },
-  { name: 'Feb', value: 35 },
-  { name: 'Mar', value: 42 },
-  { name: 'Apr', value: 38 },
-  { name: 'May', value: 50 }
-];
-
-const foodTypeData = [
-  { name: 'Vegetables', value: 35 },
-  { name: 'Fruits', value: 20 },
-  { name: 'Bakery', value: 15 },
-  { name: 'Prepared', value: 25 },
-  { name: 'Non-perishable', value: 5 }
-];
-
-const COLORS = ['#00aa48', '#0088cc', '#8884d8', '#ffc658', '#ff8042'];
+import AnalyticsCard from '@/components/analytics/AnalyticsCard';
+import AdvancedFilters from '@/components/analytics/AdvancedFilters';
+import AnalyticsCharts from '@/components/analytics/AnalyticsCharts';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { useExportManager } from '@/components/analytics/ExportManager';
 
 const AnalyticsReporting: React.FC = () => {
   const [timeRange, setTimeRange] = useState('month');
+  const { data, loading } = useAnalytics('ngo');
+  const { exportToCSV, exportToPDF } = useExportManager();
+  const [activeFilters, setActiveFilters] = useState(0);
   
-  // Mock analytics data
+  // Mock analytics data (enhanced)
   const analyticsData = {
-    totalDonationsReceived: 215,
+    totalDonationsReceived: data?.totalDonations || 215,
     totalWeightReceived: '842 kg',
     totalPeopleServed: 1245,
     averageDonationSize: '3.9 kg',
@@ -50,160 +38,141 @@ const AnalyticsReporting: React.FC = () => {
     topDonorContribution: '105 kg'
   };
 
+  const handleFiltersChange = (filters: any) => {
+    setActiveFilters(Object.values(filters).filter(v => v).length);
+  };
+
+  const handleExport = (format: 'csv' | 'pdf') => {
+    const exportData = {
+      headers: ['Metric', 'Value', 'Period'],
+      rows: [
+        ['Total Donations', analyticsData.totalDonationsReceived, timeRange],
+        ['Total Weight', analyticsData.totalWeightReceived, timeRange],
+        ['People Served', analyticsData.totalPeopleServed, timeRange],
+        ['Average Donation', analyticsData.averageDonationSize, timeRange]
+      ],
+      filename: `ngo-analytics-${timeRange}-${new Date().toISOString().split('T')[0]}`
+    };
+
+    if (format === 'csv') {
+      exportToCSV(exportData);
+    } else {
+      exportToPDF(exportData);
+    }
+  };
+
+  // Mock chart data
+  const timeSeriesData = [
+    { name: 'Jan', donations: 28, deliveries: 25 },
+    { name: 'Feb', donations: 35, deliveries: 32 },
+    { name: 'Mar', donations: 42, deliveries: 38 },
+    { name: 'Apr', donations: 38, deliveries: 35 },
+    { name: 'May', donations: 50, deliveries: 47 }
+  ];
+
+  const distributionData = [
+    { name: 'Vegetables', value: 35 },
+    { name: 'Fruits', value: 20 },
+    { name: 'Bakery', value: 15 },
+    { name: 'Prepared', value: 25 },
+    { name: 'Non-perishable', value: 5 }
+  ];
+
   return (
     <NgoLayout title="Analytics & Reporting">
-      <div className="py-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Performance Dashboard</h2>
-          <div className="flex gap-2">
-            <Select 
-              defaultValue="month" 
-              onValueChange={setTimeRange}
-            >
-              <SelectTrigger className="w-[100px] h-8 text-xs">
-                <SelectValue placeholder="Period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Week</SelectItem>
-                <SelectItem value="month">Month</SelectItem>
-                <SelectItem value="quarter">Quarter</SelectItem>
-                <SelectItem value="year">Year</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button variant="outline" size="sm" className="h-8">
-              <Download className="h-4 w-4 mr-1" />
-              Export
-            </Button>
-          </div>
-        </div>
-        
+      <div className="py-4 space-y-6">
+        {/* Enhanced filters */}
+        <AdvancedFilters
+          onFiltersChange={handleFiltersChange}
+          onExport={handleExport}
+          activeFilters={activeFilters}
+        />
+
+        {/* Key metrics with enhanced cards */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm text-muted-foreground">Total Donations</CardTitle>
-            </CardHeader>
-            <CardContent className="py-0 px-4">
-              <p className="text-2xl font-bold">{analyticsData.totalDonationsReceived}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm text-muted-foreground">Total Weight</CardTitle>
-            </CardHeader>
-            <CardContent className="py-0 px-4">
-              <p className="text-2xl font-bold">{analyticsData.totalWeightReceived}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm text-muted-foreground">People Served</CardTitle>
-            </CardHeader>
-            <CardContent className="py-0 px-4">
-              <p className="text-2xl font-bold">{analyticsData.totalPeopleServed}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm text-muted-foreground">Avg. Donation</CardTitle>
-            </CardHeader>
-            <CardContent className="py-0 px-4">
-              <p className="text-2xl font-bold">{analyticsData.averageDonationSize}</p>
-            </CardContent>
-          </Card>
+          <AnalyticsCard
+            title="Total Donations"
+            value={analyticsData.totalDonationsReceived}
+            change={{ value: 12, type: 'increase', period: 'last month' }}
+            icon={<ChartBar className="h-4 w-4" />}
+          />
+          <AnalyticsCard
+            title="Total Weight"
+            value={analyticsData.totalWeightReceived}
+            change={{ value: 8, type: 'increase', period: 'last month' }}
+            icon={<ChartBar className="h-4 w-4" />}
+          />
+          <AnalyticsCard
+            title="People Served"
+            value={analyticsData.totalPeopleServed}
+            change={{ value: 15, type: 'increase', period: 'last month' }}
+            icon={<ChartBar className="h-4 w-4" />}
+          />
+          <AnalyticsCard
+            title="Avg. Donation"
+            value={analyticsData.averageDonationSize}
+            change={{ value: 2, type: 'decrease', period: 'last month' }}
+            icon={<ChartBar className="h-4 w-4" />}
+          />
         </div>
+
+        {/* Enhanced charts */}
+        <AnalyticsCharts
+          timeSeriesData={timeSeriesData}
+          distributionData={distributionData}
+          comparisonData={[
+            { name: 'This Month', completed: 47, pending: 3, cancelled: 0 },
+            { name: 'Last Month', completed: 35, pending: 2, cancelled: 1 }
+          ]}
+        />
         
-        <Card className="mb-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex justify-between items-center text-base">
-              Donation Volume Trends
-              <CircleHelp className="h-4 w-4 text-muted-foreground" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={monthlyData}
-                  margin={{
-                    top: 5,
-                    right: 10,
-                    left: -20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#0088cc" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="mb-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex justify-between items-center text-base">
-              Food Type Distribution
-              <CircleHelp className="h-4 w-4 text-muted-foreground" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={foodTypeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {foodTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-        
+        {/* Enhanced top contributors */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Top Contributors</CardTitle>
+            <CardTitle className="text-base flex justify-between items-center">
+              Top Contributors
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleExport('csv')}
+                className="text-xs"
+              >
+                <Download className="h-3 w-3 mr-1" />
+                Export
+              </Button>
+            </CardTitle>
           </CardHeader>
           <CardContent className="px-0 py-0">
             <div className="divide-y">
               <div className="px-6 py-3 flex justify-between">
                 <div>
                   <p className="font-medium">ABC Restaurant</p>
-                  <p className="text-sm text-muted-foreground">26 donations</p>
+                  <p className="text-sm text-muted-foreground">26 donations • 15% increase</p>
                 </div>
-                <p className="font-semibold">105 kg</p>
+                <div className="text-right">
+                  <p className="font-semibold">105 kg</p>
+                  <p className="text-xs text-green-600">+12 kg</p>
+                </div>
               </div>
               <div className="px-6 py-3 flex justify-between">
                 <div>
                   <p className="font-medium">City Supermarket</p>
-                  <p className="text-sm text-muted-foreground">18 donations</p>
+                  <p className="text-sm text-muted-foreground">18 donations • 8% increase</p>
                 </div>
-                <p className="font-semibold">87 kg</p>
+                <div className="text-right">
+                  <p className="font-semibold">87 kg</p>
+                  <p className="text-xs text-green-600">+6 kg</p>
+                </div>
               </div>
               <div className="px-6 py-3 flex justify-between">
                 <div>
                   <p className="font-medium">Fresh Bakery</p>
-                  <p className="text-sm text-muted-foreground">20 donations</p>
+                  <p className="text-sm text-muted-foreground">20 donations • 25% increase</p>
                 </div>
-                <p className="font-semibold">62 kg</p>
+                <div className="text-right">
+                  <p className="font-semibold">62 kg</p>
+                  <p className="text-xs text-green-600">+12 kg</p>
+                </div>
               </div>
             </div>
           </CardContent>
