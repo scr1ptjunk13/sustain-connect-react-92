@@ -61,11 +61,14 @@ export const useProfile = () => {
     if (!user) return { error: new Error('No user found') };
 
     try {
-      const { error } = await supabase.rpc('update_user_profile', {
-        user_id: user.id,
-        new_full_name: updates.full_name || null,
-        new_phone: updates.phone || null
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          ...(updates.full_name && { full_name: updates.full_name }),
+          ...(updates.phone && { phone: updates.phone }),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
 
       if (error) throw error;
 
