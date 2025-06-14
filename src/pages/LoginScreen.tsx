@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Logo from '@/components/Logo';
 import AuthInput from '@/components/AuthInput';
-import PasswordInput from '@/components/PasswordInput';
+PasswordInput from '@/components/PasswordInput';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FormData {
   email: string;
@@ -20,11 +22,52 @@ interface FormErrors {
 
 const LoginScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { signIn, user } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Redirect authenticated users to appropriate dashboard
+    if (user) {
+      redirectToDashboard();
+    }
+  }, [user, navigate]);
+
+  const redirectToDashboard = async () => {
+    if (!user) return;
+    
+    try {
+      // Get user profile to determine role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.role) {
+        switch (profile.role) {
+          case 'donor':
+            navigate('/donor/dashboard');
+            break;
+          case 'ngo':
+            navigate('/ngo/dashboard');
+            break;
+          case 'delivery':
+            navigate('/delivery/dashboard');
+            break;
+          default:
+            navigate('/');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      navigate('/');
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -46,7 +89,7 @@ const LoginScreen: React.FC = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const validationErrors = validateForm();
@@ -55,16 +98,47 @@ const LoginScreen: React.FC = () => {
       return;
     }
     
-    // Login would happen here in a real app
-    toast({
-      title: "Login successful!",
-      description: "Welcome back to SustainConnect.",
-    });
+    setIsLoading(true);
     
-    // Navigate to home or dashboard in a real app
-    setTimeout(() => {
-      navigate('/');
-    }, 1500);
+    try {
+      const { error } = await signIn(formData.email, formData.password);
+      
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast({
+            title: "Login failed",
+            description: "Invalid email or password. Please try again.",
+            variant: "destructive"
+          });
+        } else if (error.message.includes('Email not confirmed')) {
+          toast({
+            title: "Email not verified",
+            description: "Please check your email and click the verification link before logging in.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Login failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Login successful!",
+          description: "Welcome back to SustainConnect.",
+        });
+        // redirectToDashboard will be called automatically when user state updates
+      }
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -115,8 +189,8 @@ const LoginScreen: React.FC = () => {
           </button>
         </div>
         
-        <Button type="submit" className="w-full mt-6">
-          Log In
+        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
+          {isLoading ? 'Logging in...' : 'Log In'}
         </Button>
         
         <div className="text-center mt-8">

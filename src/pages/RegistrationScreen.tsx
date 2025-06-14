@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import AuthInput from '@/components/AuthInput';
 import PasswordInput from '@/components/PasswordInput';
 import Logo from '@/components/Logo';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FormData {
   name: string;
@@ -38,9 +38,11 @@ interface FormErrors {
 
 const RegistrationScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { signUp, user } = useAuth();
   const [userType, setUserType] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -58,6 +60,26 @@ const RegistrationScreen: React.FC = () => {
       setUserType(storedUserType);
     }
   }, [navigate]);
+
+  useEffect(() => {
+    // Redirect authenticated users to appropriate dashboard
+    if (user) {
+      const userRole = localStorage.getItem('userType');
+      switch (userRole) {
+        case 'donor':
+          navigate('/donor/dashboard');
+          break;
+        case 'ngo':
+          navigate('/ngo/dashboard');
+          break;
+        case 'delivery':
+          navigate('/delivery/dashboard');
+          break;
+        default:
+          navigate('/');
+      }
+    }
+  }, [user, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -103,7 +125,7 @@ const RegistrationScreen: React.FC = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const validationErrors = validateForm();
@@ -112,16 +134,60 @@ const RegistrationScreen: React.FC = () => {
       return;
     }
     
-    // Registration would happen here in a real app
-    toast({
-      title: "Registration successful!",
-      description: `You've registered as a ${userType}. Please check your email to verify your account.`,
-    });
+    setIsLoading(true);
     
-    // Navigate to login
-    setTimeout(() => {
-      navigate('/login');
-    }, 1500);
+    try {
+      const userData = {
+        name: formData.name,
+        phone: formData.phone,
+        role: userType,
+        // Include role-specific data
+        ...(userType === 'ngo' && {
+          orgName: formData.orgName,
+          regNumber: formData.regNumber
+        }),
+        ...(userType === 'delivery' && {
+          vehicleType: formData.vehicleType,
+          licenseNumber: formData.licenseNumber
+        })
+      };
+
+      const { error } = await signUp(formData.email, formData.password, userData);
+      
+      if (error) {
+        if (error.message.includes('User already registered')) {
+          toast({
+            title: "Account already exists",
+            description: "This email is already registered. Please try logging in instead.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Registration failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Registration successful!",
+          description: "Please check your email to verify your account before logging in.",
+        });
+        
+        // Navigate to login after successful registration
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderRoleSpecificFields = () => {
@@ -264,8 +330,8 @@ const RegistrationScreen: React.FC = () => {
         </div>
         {errors.terms && <p className="text-destructive text-sm -mt-1">{errors.terms}</p>}
         
-        <Button type="submit" className="w-full mt-6">
-          Create Account
+        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
+          {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>
         
         <div className="text-center mt-6">
