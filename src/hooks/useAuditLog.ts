@@ -61,7 +61,6 @@ export const useAuditLog = () => {
   }) => {
     setLoading(true);
     try {
-      // Create a raw SQL query since we need to join with profiles
       const query = supabase
         .from('audit_logs')
         .select('*')
@@ -71,7 +70,14 @@ export const useAuditLog = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setLogs(data || []);
+      
+      // Transform the data to match our interface
+      const transformedLogs: AuditLogEntry[] = (data || []).map(log => ({
+        ...log,
+        details: typeof log.details === 'string' ? JSON.parse(log.details) : log.details || {}
+      }));
+      
+      setLogs(transformedLogs);
     } catch (error) {
       console.error('Error fetching audit logs:', error);
     } finally {

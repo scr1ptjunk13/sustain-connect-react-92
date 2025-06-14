@@ -39,18 +39,19 @@ const DataPrivacySettings: React.FC = () => {
     if (!user) return;
 
     try {
-      // Use raw SQL to query privacy_consents table
       const { data, error } = await supabase
-        .rpc('get_privacy_consents', { p_user_id: user.id });
+        .from('privacy_consents')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        const consent = data[0];
+      if (data) {
         setConsents({
-          marketing: consent.marketing_consent || false,
-          analytics: consent.analytics_consent || false,
-          dataSharing: consent.data_sharing_consent || false
+          marketing: data.marketing_consent || false,
+          analytics: data.analytics_consent || false,
+          dataSharing: data.data_sharing_consent || false
         });
       }
     } catch (error) {

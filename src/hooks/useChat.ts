@@ -80,7 +80,13 @@ export const useChat = () => {
 
       if (error) throw error;
 
-      setRooms(data || []);
+      // Transform the data to match our types
+      const typedRooms: ChatRoom[] = (data || []).map(room => ({
+        ...room,
+        room_type: room.room_type as 'general' | 'support' | 'delivery' | 'donation'
+      }));
+
+      setRooms(typedRooms);
     } catch (error: any) {
       console.error('Error fetching chat rooms:', error);
       toast({
@@ -110,7 +116,13 @@ export const useChat = () => {
 
       if (error) throw error;
 
-      setMessages(data || []);
+      // Transform the data to match our types
+      const typedMessages: ChatMessage[] = (data || []).map(message => ({
+        ...message,
+        message_type: message.message_type as 'text' | 'image' | 'file' | 'system'
+      }));
+
+      setMessages(typedMessages);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
     }

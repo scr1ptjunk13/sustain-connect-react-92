@@ -39,18 +39,17 @@ export const useMessaging = () => {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select(`
-          *,
-          sender:profiles!messages_sender_id_fkey(full_name, role)
-        `)
+        .select('*')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const typedMessages = (data || []).map(message => ({
+      const typedMessages: Message[] = (data || []).map(message => ({
         ...message,
-        message_type: message.message_type as 'direct' | 'support' | 'notification'
+        message_type: message.message_type as 'direct' | 'support' | 'notification',
+        is_read: message.is_read || false,
+        subject: message.subject || undefined
       }));
 
       setMessages(typedMessages);
