@@ -142,6 +142,34 @@ export const useDonations = () => {
     }
   };
 
+  const processPayment = async (amount: number, type: string, description: string, donationId?: string) => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        method: 'POST',
+        body: {
+          amount,
+          currency: 'usd',
+          type,
+          description,
+          donation_id: donationId
+        }
+      });
+
+      if (error) throw error;
+      return data.url; // Stripe checkout URL
+    } catch (error: any) {
+      console.error('Error processing payment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process payment",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchDonations();
@@ -154,6 +182,7 @@ export const useDonations = () => {
     fetchDonations,
     createDonation,
     claimDonation,
-    uploadImage
+    uploadImage,
+    processPayment
   };
 };
