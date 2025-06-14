@@ -12,7 +12,39 @@ export const usePushNotifications = () => {
 
   useEffect(() => {
     setIsSupported('serviceWorker' in navigator && 'PushManager' in window);
-  }, []);
+    
+    // Check if user already has a subscription
+    if (user && isSupported) {
+      checkExistingSubscription();
+    }
+  }, [user, isSupported]);
+
+  const checkExistingSubscription = async () => {
+    try {
+      // Check database for existing subscription
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setIsSubscribed(true);
+        // Try to get the current subscription from the browser
+        const registration = await navigator.serviceWorker.ready;
+        const currentSub = await registration.pushManager.getSubscription();
+        if (currentSub) {
+          setSubscription(currentSub);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error checking existing subscription:', error);
+    }
+  };
 
   const requestPermission = async (): Promise<boolean> => {
     if (!isSupported) {
@@ -47,9 +79,13 @@ export const usePushNotifications = () => {
 
     try {
       const registration = await navigator.serviceWorker.ready;
+      
+      // Use a mock VAPID key for demonstration
+      const vapidKey = 'BMxKs0Kw5-QiJ5s9Z9Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8';
+      
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: 'your-vapid-public-key' // Replace with actual VAPID key
+        applicationServerKey: vapidKey
       });
 
       setSubscription(sub);
@@ -60,8 +96,8 @@ export const usePushNotifications = () => {
         .from('push_subscriptions')
         .upsert({
           user_id: user.id,
-          subscription: JSON.stringify(sub),
-          created_at: new Date().toISOString()
+          subscription: JSON.stringify(sub.toJSON()),
+          updated_at: new Date().toISOString()
         });
 
       if (error) throw error;

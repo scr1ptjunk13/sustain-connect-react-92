@@ -12,6 +12,8 @@ export type Database = {
       delivery_assignments: {
         Row: {
           created_at: string | null
+          current_location_lat: number | null
+          current_location_lng: number | null
           delivery_address: string
           delivery_completed_at: string | null
           delivery_lat: number | null
@@ -19,6 +21,7 @@ export type Database = {
           delivery_person_id: string
           delivery_scheduled_at: string | null
           donation_id: string
+          eta_minutes: number | null
           id: string
           ngo_id: string
           notes: string | null
@@ -29,6 +32,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          current_location_lat?: number | null
+          current_location_lng?: number | null
           delivery_address: string
           delivery_completed_at?: string | null
           delivery_lat?: number | null
@@ -36,6 +41,7 @@ export type Database = {
           delivery_person_id: string
           delivery_scheduled_at?: string | null
           donation_id: string
+          eta_minutes?: number | null
           id?: string
           ngo_id: string
           notes?: string | null
@@ -46,6 +52,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          current_location_lat?: number | null
+          current_location_lng?: number | null
           delivery_address?: string
           delivery_completed_at?: string | null
           delivery_lat?: number | null
@@ -53,6 +61,7 @@ export type Database = {
           delivery_person_id?: string
           delivery_scheduled_at?: string | null
           donation_id?: string
+          eta_minutes?: number | null
           id?: string
           ngo_id?: string
           notes?: string | null
@@ -347,6 +356,30 @@ export type Database = {
           phone?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          subscription: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subscription: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subscription?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

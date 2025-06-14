@@ -5,6 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
+// Extend the Window interface to include google
+declare global {
+  interface Window {
+    google: typeof google;
+    initMap?: () => void;
+  }
+}
+
 interface GoogleMapProps {
   height?: string;
   className?: string;
@@ -37,7 +45,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
       const defaultCenter = currentLocation || pickupLocation || { lat: 37.7749, lng: -122.4194 };
       
-      map.current = new google.maps.Map(mapContainer.current, {
+      map.current = new window.google.maps.Map(mapContainer.current, {
         center: defaultCenter,
         zoom: 13,
         styles: [
@@ -67,19 +75,19 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
   // Add markers and route when map is loaded
   useEffect(() => {
-    if (!mapLoaded || !map.current) return;
+    if (!mapLoaded || !map.current || !window.google) return;
 
     // Clear existing markers
     const markers: google.maps.Marker[] = [];
 
     // Add pickup marker
     if (pickupLocation) {
-      const pickupMarker = new google.maps.Marker({
+      const pickupMarker = new window.google.maps.Marker({
         position: pickupLocation,
         map: map.current,
         title: 'Pickup Location',
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
+          path: window.google.maps.SymbolPath.CIRCLE,
           scale: 8,
           fillColor: '#22c55e',
           fillOpacity: 1,
@@ -92,12 +100,12 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
     // Add dropoff marker
     if (dropoffLocation) {
-      const dropoffMarker = new google.maps.Marker({
+      const dropoffMarker = new window.google.maps.Marker({
         position: dropoffLocation,
         map: map.current,
         title: 'Dropoff Location',
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
+          path: window.google.maps.SymbolPath.CIRCLE,
           scale: 8,
           fillColor: '#ef4444',
           fillOpacity: 1,
@@ -110,12 +118,12 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
     // Add current location marker
     if (currentLocation) {
-      const currentMarker = new google.maps.Marker({
+      const currentMarker = new window.google.maps.Marker({
         position: currentLocation,
         map: map.current,
         title: 'Current Location',
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
+          path: window.google.maps.SymbolPath.CIRCLE,
           scale: 10,
           fillColor: '#3b82f6',
           fillOpacity: 1,
@@ -127,9 +135,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     }
 
     // Show route if requested
-    if (showRoute && pickupLocation && dropoffLocation) {
-      const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer({
+    if (showRoute && pickupLocation && dropoffLocation && window.google) {
+      const directionsService = new window.google.maps.DirectionsService();
+      const directionsRenderer = new window.google.maps.DirectionsRenderer({
         suppressMarkers: true,
         polylineOptions: {
           strokeColor: '#3b82f6',
@@ -143,7 +151,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         origin: pickupLocation,
         destination: dropoffLocation,
         waypoints: currentLocation ? [{ location: currentLocation, stopover: false }] : [],
-        travelMode: google.maps.TravelMode.DRIVING,
+        travelMode: window.google.maps.TravelMode.DRIVING,
       }, (result, status) => {
         if (status === 'OK' && result) {
           directionsRenderer.setDirections(result);
@@ -160,7 +168,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   const searchAddress = async () => {
     if (!addressInput.trim() || !window.google) return;
 
-    const geocoder = new google.maps.Geocoder();
+    const geocoder = new window.google.maps.Geocoder();
     
     try {
       const result = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
