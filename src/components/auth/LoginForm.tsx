@@ -7,42 +7,37 @@ import PasswordInput from '@/components/PasswordInput';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface FormData {
-  email: string;
-  password: string;
-}
-
-interface FormErrors {
-  email?: string;
-  password?: string;
-}
-
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
-  const [formData, setFormData] = useState<FormData>({
+  const { signIn, resetPassword } = useAuth();
+  const [formData, setFormData] = useState({
     email: '',
-    password: '',
+    password: ''
   });
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
-    // Clear error when user types
-    if (errors[id as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [id]: undefined }));
+    if (errors[id]) {
+      setErrors(prev => ({ ...prev, [id]: '' }));
     }
   };
 
   const validateForm = () => {
-    const newErrors: FormErrors = {};
+    const newErrors: Record<string, string> = {};
     
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
     
-    if (!formData.password) newErrors.password = 'Password is required';
+    if (!showForgotPassword && !formData.password) {
+      newErrors.password = 'Password is required';
+    }
     
     return newErrors;
   };
@@ -59,39 +54,52 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await signIn(formData.email, formData.password);
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
+      if (showForgotPassword) {
+        const { error } = await resetPassword(formData.email);
+        
+        if (error) {
           toast({
-            title: "Login failed",
-            description: "Invalid email or password. Please try again.",
-            variant: "destructive"
-          });
-        } else if (error.message.includes('Email not confirmed')) {
-          toast({
-            title: "Email not verified",
-            description: "Please check your email and click the verification link before logging in.",
+            title: "Reset failed",
+            description: error.message,
             variant: "destructive"
           });
         } else {
           toast({
-            title: "Login failed",
-            description: error.message,
-            variant: "destructive"
+            title: "Reset email sent",
+            description: "Check your email for password reset instructions"
           });
+          setShowForgotPassword(false);
         }
       } else {
-        toast({
-          title: "Login successful!",
-          description: "Welcome back to SustainConnect.",
-        });
-        // redirectToDashboard will be called automatically when user state updates
+        const { error } = await signIn(formData.email, formData.password);
+        
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            toast({
+              title: "Login failed",
+              description: "Invalid email or password. Please try again.",
+              variant: "destructive"
+            });
+          } else if (error.message.includes('Email not confirmed')) {
+            toast({
+              title: "Email not verified",
+              description: "Please check your email and click the verification link before logging in.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Login failed",
+              description: error.message,
+              variant: "destructive"
+            });
+          }
+        }
+        // Success handling is done in AuthContext via onAuthStateChange
       }
     } catch (error: any) {
       toast({
-        title: "Login failed",
-        description: "An unexpected error occurred. Please try again.",
+        title: "An error occurred",
+        description: "Please try again later",
         variant: "destructive"
       });
     } finally {
@@ -100,53 +108,73 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="form-container">
-      <AuthInput
-        id="email"
-        label="Email Address"
-        type="email"
-        value={formData.email}
-        onChange={handleInputChange}
-        error={errors.email}
-        required
-      />
+    <>
+      <h1 className="text-2xl font-bold mb-1 text-center">
+        {showForgotPassword ? 'Reset Password' : 'Welcome Back'}
+      </h1>
+      <p className="text-gray-600 text-center mb-6">
+        {showForgotPassword 
+          ? 'Enter your email to receive reset instructions'
+          : 'Sign in to continue making a difference'
+        }
+      </p>
       
-      <PasswordInput
-        id="password"
-        label="Password"
-        value={formData.password}
-        onChange={handleInputChange}
-        error={errors.password}
-        required
-      />
-      
-      <div className="flex justify-end">
-        <button 
-          type="button"
-          onClick={() => navigate('/recover-password')}
-          className="text-sm text-primary-600 font-medium"
-        >
-          Forgot Password?
-        </button>
-      </div>
-      
-      <Button type="submit" className="w-full mt-6" disabled={isLoading}>
-        {isLoading ? 'Logging in...' : 'Log In'}
-      </Button>
-      
-      <div className="text-center mt-8">
-        <p className="text-sm text-gray-600">
-          Don't have an account yet?{' '}
+      <form onSubmit={handleSubmit} className="form-container">
+        <AuthInput
+          id="email"
+          label="Email Address"
+          type="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          error={errors.email}
+          required
+        />
+        
+        {!showForgotPassword && (
+          <PasswordInput
+            id="password"
+            label="Password"
+            value={formData.password}
+            onChange={handleInputChange}
+            error={errors.password}
+            required
+          />
+        )}
+        
+        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
+          {isLoading 
+            ? (showForgotPassword ? 'Sending...' : 'Signing in...')
+            : (showForgotPassword ? 'Send Reset Email' : 'Sign In')
+          }
+        </Button>
+        
+        <div className="text-center mt-4">
           <button 
             type="button"
-            onClick={() => navigate('/select-role')}
-            className="text-primary-600 font-medium"
+            onClick={() => {
+              setShowForgotPassword(!showForgotPassword);
+              setErrors({});
+            }}
+            className="text-primary-600 font-medium text-sm"
           >
-            Sign up
+            {showForgotPassword ? 'Back to Login' : 'Forgot Password?'}
           </button>
-        </p>
-      </div>
-    </form>
+        </div>
+        
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <button 
+              type="button"
+              onClick={() => navigate('/select-role')}
+              className="text-primary-600 font-medium"
+            >
+              Sign up
+            </button>
+          </p>
+        </div>
+      </form>
+    </>
   );
 };
 

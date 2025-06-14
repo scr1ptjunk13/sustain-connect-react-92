@@ -3,15 +3,18 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: string[];
+  requireEmailVerification?: boolean;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  allowedRoles 
+  allowedRoles,
+  requireEmailVerification = false
 }) => {
   const { user, loading } = useAuth();
 
@@ -32,11 +35,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  // If specific roles are required, check them here
-  // This would require fetching the user's role from the profile
-  // For now, we'll just allow authenticated users
+  // Check email verification if required
+  if (requireEmailVerification && !user.email_confirmed_at) {
+    return (
+      <div className="min-h-screen p-6">
+        <EmailVerificationBanner />
+        <div className="text-center mt-8">
+          <h2 className="text-xl font-semibold mb-2">Email Verification Required</h2>
+          <p className="text-muted-foreground">
+            Please verify your email address to access this feature.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  return <>{children}</>;
+  return (
+    <>
+      <EmailVerificationBanner />
+      {children}
+    </>
+  );
 };
 
 export default ProtectedRoute;

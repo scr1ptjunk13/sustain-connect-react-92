@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   User, 
@@ -8,35 +8,30 @@ import {
   HelpCircle,
   LogOut,
   ArrowRight,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 import DonorLayout from '@/components/donor/DonorLayout';
+import ProfileEditForm from '@/components/auth/ProfileEditForm';
 
 const DonorProfile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Mock user data
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    organization: 'ABC Restaurant',
-    verified: true,
-    joinedDate: 'April 2025',
-  };
+  const { user, signOut } = useAuth();
+  const { profile, loading } = useProfile();
+  const [isEditing, setIsEditing] = useState(false);
 
-  const handleLogout = () => {
-    // In a real app, this would call an API to log the user out
+  const handleLogout = async () => {
+    await signOut();
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out."
     });
-    
-    // Navigate to the login screen
     navigate('/login');
   };
 
@@ -92,11 +87,48 @@ const DonorProfile: React.FC = () => {
     </button>
   );
 
+  if (loading) {
+    return (
+      <DonorLayout>
+        <div className="py-4">
+          <div className="animate-pulse space-y-4">
+            <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      </DonorLayout>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <DonorLayout>
+        <div className="py-4">
+          <ProfileEditForm
+            onCancel={() => setIsEditing(false)}
+            onSuccess={() => setIsEditing(false)}
+          />
+        </div>
+      </DonorLayout>
+    );
+  }
+
   return (
     <DonorLayout>
       <div className="py-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-semibold">Profile</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing(true)}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
         </div>
 
         <ProfileSection 
@@ -104,13 +136,13 @@ const DonorProfile: React.FC = () => {
           title="Personal Information"
         >
           <div className="bg-white rounded-lg border p-4">
-            <ProfileItem label="Name" value={user.name} />
+            <ProfileItem label="Name" value={profile?.full_name || 'Not provided'} />
             <Separator />
-            <ProfileItem label="Email" value={user.email} />
+            <ProfileItem label="Email" value={profile?.email || user?.email || 'Not provided'} />
             <Separator />
-            <ProfileItem label="Phone" value={user.phone} />
+            <ProfileItem label="Phone" value={profile?.phone || 'Not provided'} />
             <Separator />
-            <ProfileItem label="Organization" value={user.organization} />
+            <ProfileItem label="Role" value="Donor" />
           </div>
         </ProfileSection>
 
@@ -121,24 +153,26 @@ const DonorProfile: React.FC = () => {
           <div className="bg-white rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Verification Status</p>
-                <p className="text-sm text-muted-foreground">Account verified</p>
+                <p className="font-medium">Email Verification</p>
+                <p className="text-sm text-muted-foreground">
+                  {user?.email_confirmed_at ? 'Email verified' : 'Email not verified'}
+                </p>
               </div>
-              {user.verified ? (
+              {user?.email_confirmed_at ? (
                 <div className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center">
                   <CheckCircleIcon className="h-3 w-3 mr-1" />
                   Verified
                 </div>
               ) : (
-                <Button size="sm" className="text-xs">
-                  Verify Now
-                </Button>
+                <div className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-medium">
+                  Pending
+                </div>
               )}
             </div>
             <Separator className="my-3" />
             <ProfileItem 
               label="Member Since" 
-              value={user.joinedDate} 
+              value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
             />
           </div>
         </ProfileSection>
