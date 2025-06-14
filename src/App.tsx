@@ -11,6 +11,7 @@ import RegistrationScreen from "./pages/RegistrationScreen";
 import LoginScreen from "./pages/LoginScreen";
 import PasswordRecoveryScreen from "./pages/PasswordRecoveryScreen";
 import NotFound from "./pages/NotFound";
+import SecurityCompliance from "./pages/SecurityCompliance";
 
 // Donor Module Screens
 import DonorDashboard from "./pages/donor/DonorDashboard";
@@ -44,6 +45,13 @@ import DeliveryHistory from "./pages/delivery/DeliveryHistory";
 import ActiveDeliveries from "./pages/delivery/ActiveDeliveries";
 import DeliveryProfile from "./pages/delivery/DeliveryProfile";
 
+// Admin Module Screens
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagementPage from "./pages/admin/UserManagementPage";
+import SystemMonitoringPage from "./pages/admin/SystemMonitoringPage";
+import BackupRecoveryPage from "./pages/admin/BackupRecoveryPage";
+import AdminSettings from "./pages/admin/AdminSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -59,6 +67,7 @@ const App = () => (
             <Route path="/register" element={<RegistrationScreen />} />
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/recover-password" element={<PasswordRecoveryScreen />} />
+            <Route path="/security" element={<SecurityCompliance />} />
             
             {/* Donor Module Routes */}
             <Route path="/donor/dashboard" element={<DonorDashboard />} />
@@ -91,6 +100,13 @@ const App = () => (
             <Route path="/delivery/delivery-confirmation/:id" element={<DeliveryConfirmation />} />
             <Route path="/delivery/history" element={<DeliveryHistory />} />
             <Route path="/delivery/profile" element={<DeliveryProfile />} />
+            
+            {/* Admin Module Routes */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<UserManagementPage />} />
+            <Route path="/admin/monitoring" element={<SystemMonitoringPage />} />
+            <Route path="/admin/backup" element={<BackupRecoveryPage />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
