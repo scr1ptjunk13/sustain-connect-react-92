@@ -2,22 +2,45 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useServiceWorker } from './useServiceWorker';
+import { useWebSocketFallback } from './useWebSocketFallback';
 import { toast } from '@/components/ui/use-toast';
 
 export const usePushNotifications = () => {
   const [isSupported, setIsSupported] = useState(false);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [vapidKey, setVapidKey] = useState<string | null>(null);
   const { user } = useAuth();
+  const { isRegistered, registration } = useServiceWorker();
+  const { isConnected: wsConnected } = useWebSocketFallback();
 
   useEffect(() => {
     setIsSupported('serviceWorker' in navigator && 'PushManager' in window);
+    
+    // Fetch VAPID key from Supabase
+    fetchVapidKey();
     
     // Check if user already has a subscription
     if (user && isSupported) {
       checkExistingSubscription();
     }
-  }, [user, isSupported]);
+  }, [user, isSupported, isRegistered]);
+
+  const fetchVapidKey = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-vapid-key');
+      if (error) throw error;
+      setVapidKey(data.vapidKey);
+    } catch (error) {
+      console.error('Error fetching VAPID key:', error);
+      // Fallback to WebSocket notifications
+      toast({
+        title: "Push Setup",
+        description: "Using real-time fallback for notifications",
+      });
+    }
+  };
 
   const checkExistingSubscription = async () => {
     try {
@@ -35,10 +58,11 @@ export const usePushNotifications = () => {
       if (data) {
         setIsSubscribed(true);
         // Try to get the current subscription from the browser
-        const registration = await navigator.serviceWorker.ready;
-        const currentSub = await registration.pushManager.getSubscription();
-        if (currentSub) {
-          setSubscription(currentSub);
+        if (registration) {
+          const currentSub = await registration.pushManager.getSubscription();
+          if (currentSub) {
+            setSubscription(currentSub);
+          }
         }
       }
     } catch (error: any) {
@@ -50,7 +74,7 @@ export const usePushNotifications = () => {
     if (!isSupported) {
       toast({
         title: "Not Supported",
-        description: "Push notifications are not supported in this browser",
+        description: "Push notifications are not supported. Using real-time fallback.",
         variant: "destructive"
       });
       return false;
@@ -61,13 +85,13 @@ export const usePushNotifications = () => {
     if (permission === 'granted') {
       toast({
         title: "Notifications Enabled",
-        description: "You'll receive updates about your deliveries"
+        description: "You'll receive real-time updates about your deliveries"
       });
       return true;
     } else {
       toast({
         title: "Permission Denied",
-        description: "Please enable notifications in your browser settings",
+        description: "Using alternative notification methods",
         variant: "destructive"
       });
       return false;
@@ -75,17 +99,19 @@ export const usePushNotifications = () => {
   };
 
   const subscribe = async () => {
-    if (!isSupported || !user) return;
+    if (!isSupported || !user || !registration || !vapidKey) {
+      toast({
+        title: "Setup Required",
+        description: "Push notification setup incomplete. Using fallback methods.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      const registration = await navigator.serviceWorker.ready;
-      
-      // Use a mock VAPID key for demonstration
-      const vapidKey = 'BMxKs0Kw5-QiJ5s9Z9Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8';
-      
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: vapidKey
+        applicationServerKey: urlBase64ToUint8Array(vapidKey)
       });
 
       setSubscription(sub);
@@ -110,7 +136,7 @@ export const usePushNotifications = () => {
       console.error('Error subscribing to push notifications:', error);
       toast({
         title: "Subscription Failed",
-        description: "Failed to enable push notifications",
+        description: "Using real-time fallback for notifications",
         variant: "destructive"
       });
     }
@@ -156,13 +182,30 @@ export const usePushNotifications = () => {
     });
   };
 
+  // Utility function to convert VAPID key
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
   return {
     isSupported,
-    isSubscribed,
+    isSubscribed: isSubscribed || wsConnected, // Consider WebSocket as backup
     subscription,
     requestPermission,
     subscribe,
     unsubscribe,
-    sendTestNotification
+    sendTestNotification,
+    hasRealTimeSupport: isSubscribed || wsConnected
   };
 };
