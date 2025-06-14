@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PaymentProcessorProps {
   donationId?: string;
@@ -26,8 +27,18 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
   const [paymentType, setPaymentType] = useState(defaultType);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const handlePayment = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to process payments",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!amount || amount < 50) { // Minimum $0.50
       toast({
         title: "Invalid Amount",

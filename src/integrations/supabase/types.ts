@@ -228,6 +228,39 @@ export type Database = {
           },
         ]
       }
+      financial_analytics: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          payment_count: number | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          total_fees: number | null
+          total_revenue: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          payment_count?: number | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          total_fees?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          payment_count?: number | null
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          total_fees?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       impact_records: {
         Row: {
           created_at: string | null
@@ -329,6 +362,62 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string | null
+          currency: string
+          description: string
+          donation_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["payment_status"] | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          type: Database["public"]["Enums"]["payment_type"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string
+          description: string
+          donation_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          type: Database["public"]["Enums"]["payment_type"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string
+          description?: string
+          donation_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          type?: Database["public"]["Enums"]["payment_type"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_donation_id_fkey"
+            columns: ["donation_id"]
+            isOneToOne: false
+            referencedRelation: "donations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -383,6 +472,59 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_receipts: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          description: string | null
+          id: string
+          issued_date: string
+          payment_id: string
+          receipt_number: string
+          recipient_email: string
+          recipient_name: string
+          tax_year: number
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          issued_date: string
+          payment_id: string
+          receipt_number: string
+          recipient_email: string
+          recipient_name: string
+          tax_year: number
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          issued_date?: string
+          payment_id?: string
+          receipt_number?: string
+          recipient_email?: string
+          recipient_name?: string
+          tax_year?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_receipts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -399,6 +541,8 @@ export type Database = {
         | "in_transit"
         | "delivered"
         | "cancelled"
+      payment_status: "pending" | "completed" | "failed" | "cancelled"
+      payment_type: "donation_fee" | "premium_subscription" | "processing_fee"
       user_role: "donor" | "ngo" | "delivery"
       verification_status: "pending" | "verified" | "rejected"
     }
@@ -525,6 +669,8 @@ export const Constants = {
         "delivered",
         "cancelled",
       ],
+      payment_status: ["pending", "completed", "failed", "cancelled"],
+      payment_type: ["donation_fee", "premium_subscription", "processing_fee"],
       user_role: ["donor", "ngo", "delivery"],
       verification_status: ["pending", "verified", "rejected"],
     },

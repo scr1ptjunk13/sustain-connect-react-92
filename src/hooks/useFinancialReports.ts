@@ -19,7 +19,7 @@ export interface PaymentRecord {
   type: string;
   description: string;
   status: string;
-  completed_at: string;
+  completed_at: string | null;
   created_at: string;
 }
 
@@ -58,7 +58,8 @@ export const useFinancialReports = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Use type assertion for now until Supabase types are regenerated
+      const { data, error } = await (supabase as any)
         .from('payments')
         .select('*')
         .eq('user_id', user.id)
