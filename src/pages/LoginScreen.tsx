@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Logo from '@/components/Logo';
 import AuthInput from '@/components/AuthInput';
-PasswordInput from '@/components/PasswordInput';
+import PasswordInput from '@/components/PasswordInput';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
