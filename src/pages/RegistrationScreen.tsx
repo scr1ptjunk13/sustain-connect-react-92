@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -138,17 +139,17 @@ const RegistrationScreen: React.FC = () => {
     
     try {
       const userData = {
-        name: formData.name,
+        full_name: formData.name, // Changed from 'name' to 'full_name'
         phone: formData.phone,
         role: userType,
-        // Include role-specific data
+        // Include role-specific data with correct field names
         ...(userType === 'ngo' && {
-          orgName: formData.orgName,
-          regNumber: formData.regNumber
+          organization_name: formData.orgName, // Changed from 'orgName'
+          registration_number: formData.regNumber // Changed from 'regNumber'
         }),
         ...(userType === 'delivery' && {
-          vehicleType: formData.vehicleType,
-          licenseNumber: formData.licenseNumber
+          vehicle_type: formData.vehicleType, // Changed from 'vehicleType'
+          license_number: formData.licenseNumber // Changed from 'licenseNumber'
         })
       };
 
