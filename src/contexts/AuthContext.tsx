@@ -67,15 +67,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          full_name: userData.name,
+          full_name: userData.full_name,
           phone: userData.phone,
           role: userData.role,
           // NGO specific data
-          organization_name: userData.orgName,
-          registration_number: userData.regNumber,
+          organization_name: userData.organization_name,
+          registration_number: userData.registration_number,
           // Delivery specific data
-          vehicle_type: userData.vehicleType,
-          license_number: userData.licenseNumber
+          vehicle_type: userData.vehicle_type,
+          license_number: userData.license_number
         }
       }
     });
